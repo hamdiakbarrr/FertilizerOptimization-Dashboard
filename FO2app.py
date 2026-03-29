@@ -113,9 +113,9 @@ def calculate_profit(yield_pred, n, p, k):
     return revenue - biaya
 
 # LANGKAH 1: OPTIMASI GLOBAL CEPAT
-N_grid = np.linspace(150, 400, 50)
-P_grid = np.linspace(150, 400, 50)
-K_grid = np.linspace(150, 400, 50)
+N_grid = np.linspace(min_N, 400, 50)
+P_grid = np.linspace(min_N, 400, 50)
+K_grid = np.linspace(min_N, 400, 50)
 
 nn, pp, kk = np.meshgrid(N_grid, P_grid, K_grid, indexing='ij')
 
