@@ -330,7 +330,20 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
     pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 10, "4. Kurva Analisis Profitabilitas (N, P, K):", ln=True, align='C')
     pdf.ln(5)
-    
+
+    # Trik Pemanasan Kaleido (Mencegah Deadlock)
+    try:
+        dummy_fig = go.Figure()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as dummy_file:
+            dummy_fig.write_image(dummy_file.name, format="png", engine="kaleido")
+        os.unlink(dummy_file.name)
+    except Exception:
+        pass # Abaikan jika pemanasan gagal, biarkan proses berlanjut
+        
+    # --- Baru dilanjut dengan kode aslimu di bawah ini ---
+    for idx, fig in enumerate([fig1, fig2, fig3]):
+        # ... kode aslimu ...
+        
     for idx, fig in enumerate([fig1, fig2, fig3]):
         fig_copy = go.Figure(fig) 
         
@@ -346,7 +359,7 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
         fig_copy.update_xaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
         
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-            fig_copy.write_image(tmpfile.name, format="png", width=900, height=380, scale=2) 
+            fig_copy.write_image(tmpfile.name, format="png", width=800, height=350, scale=1, engine="kaleido") 
             pdf.image(tmpfile.name, x=15, w=180)
             pdf.ln(3) 
             
