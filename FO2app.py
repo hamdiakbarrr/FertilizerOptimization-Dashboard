@@ -247,13 +247,23 @@ with c3:
     fig_k = create_plotly_chart(K_range, profits_K, opt_K, global_max_profit, "Kurva Kalium (K)", "#BA68C8", "K (kg/ha)")
     st.plotly_chart(fig_k, use_container_width=True)
 
-# FITUR EXPORT: DOWNLOAD REPORT PDF (DENGAN GAMBAR, LOGO & ALIGNMENT RAPI)
-from fpdf import FPDF
-from datetime import datetime
-import tempfile
 import os
+import tempfile
+from datetime import datetime
+import plotly.graph_objects as go
+from fpdf import FPDF
+import plotly.io as pio
 
-def generate_pdf_report(fig1, fig2, fig3):
+# --- KODE WAJIB ANTI-HANG STREAMLIT CLOUD ---
+# Letakkan 2 baris ini di bagian paling atas app.py kamu (setelah import)
+pio.kaleido.scope.mathjax = None
+pio.kaleido.scope.chromium_args = tuple([
+    "--headless", "--no-sandbox", "--disable-gpu", 
+    "--single-process", "--disable-dev-shm-usage"
+])
+
+# Tambahkan semua variabel yang dibutuhkan ke dalam parameter (dalam tanda kurung)
+def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jual, opt_N, opt_P, opt_K, opt_yield, global_max_profit):
     pdf = FPDF()
     pdf.add_page()
     
@@ -280,9 +290,8 @@ def generate_pdf_report(fig1, fig2, fig3):
     pdf.cell(0, 8, "1. Parameter Lapangan & Ekonomi:", ln=True)
     pdf.set_font("Arial", '', 11)
     
-    # Menggunakan sistem cell width untuk merapikan titik dua
-    w_label = 45 # Lebar kolom untuk nama parameter
-    w_colon = 5  # Lebar kolom untuk titik dua
+    w_label = 45 
+    w_colon = 5  
     
     pdf.cell(10); pdf.cell(w_label, 6, "- Umur Tanaman"); pdf.cell(w_colon, 6, ":"); pdf.cell(0, 6, f"{umur} Tahun", ln=True)
     pdf.cell(10); pdf.cell(w_label, 6, "- Curah Hujan"); pdf.cell(w_colon, 6, ":"); pdf.cell(0, 6, f"{curah_hujan} mm/tahun", ln=True)
@@ -299,7 +308,6 @@ def generate_pdf_report(fig1, fig2, fig3):
     pdf.cell(10); pdf.cell(w_label, 6, "- Pupuk Fosfor (P)"); pdf.cell(w_colon, 6, ":"); pdf.cell(0, 6, f"{opt_P:.0f} kg/ha", ln=True)
     pdf.cell(10); pdf.cell(w_label, 6, "- Pupuk Kalium (K)"); pdf.cell(w_colon, 6, ":"); pdf.cell(0, 6, f"{opt_K:.0f} kg/ha", ln=True)
     
-    # Prediksi Produksi dengan warna Hijau
     pdf.set_text_color(46, 125, 50) 
     pdf.cell(10); pdf.cell(w_label, 6, "- Prediksi Produksi"); pdf.cell(w_colon, 6, ":"); pdf.cell(0, 6, f"{opt_yield:,.0f} kg/ha", ln=True)
     pdf.set_text_color(0, 0, 0) 
@@ -327,31 +335,23 @@ def generate_pdf_report(fig1, fig2, fig3):
     for idx, fig in enumerate([fig1, fig2, fig3]):
         fig_copy = go.Figure(fig) 
         
-        # PERBAIKAN GRAFIK UNTUK PDF
         fig_copy.update_layout(
             plot_bgcolor='white', 
             paper_bgcolor='white', 
-            font=dict(color='black', size=14), # Memperbesar font agar terbaca di PDF
-            margin=dict(l=80, r=30, t=40, b=50), # KUNCI: Memberikan ruang (margin) agar angka sumbu tidak terpotong!
+            font=dict(color='black', size=14), 
+            margin=dict(l=80, r=30, t=40, b=50), 
             title_font=dict(size=16)
         )
         
-        # Memastikan warna garis sumbu dan angkanya menjadi hitam pekat
         fig_copy.update_yaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
         fig_copy.update_xaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
         
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-            # Mengubah dimensi (width & height) agar proporsional
-            # Menambahkan scale=2 agar gambar dirender menjadi resolusi tinggi (HD)
             fig_copy.write_image(tmpfile.name, format="png", width=900, height=380, scale=2) 
-            
-            # Memasukkan gambar ke PDF
             pdf.image(tmpfile.name, x=15, w=180)
-            pdf.ln(3) # Spasi antar grafik diperkecil agar 3 grafik muat dalam 1 halaman
+            pdf.ln(3) 
             
         os.unlink(tmpfile.name)
-    
-    pdf.ln(5)
     
     pdf.ln(5)
     pdf.set_font("Arial", 'I', 9)
@@ -361,20 +361,47 @@ def generate_pdf_report(fig1, fig2, fig3):
     return pdf.output(dest='S').encode('latin-1')
 
 # TOMBOL DOWNLOAD DI STREAMLIT
-st.write("---")
 st.markdown("### 📄 Export Laporan Eksekutif")
-st.markdown("Unduh hasil kalkulasi beserta grafik kurva profitabilitas dalam format PDF formal.")
+st.write("Unduh hasil kalkulasi beserta grafik kurva profitabilitas dalam format PDF formal.")
 
-with st.spinner("Menyiapkan dokumen PDF..."):
-    pdf_bytes = generate_pdf_report(fig_n, fig_p, fig_k)
+# 1. Tombol pemicu untuk mulai membuat PDF
+if st.button("Buat Dokumen PDF"):
+    # Munculkan animasi loading agar user tahu sistem sedang bekerja
+    with st.spinner("Menyiapkan dokumen PDF... Proses ini memakan waktu beberapa detik."):
+        try:
+            # PANGGIL FUNGSINYA DI SINI
+            # Penting: Pastikan nama variabel di bawah ini (fig_N, umur_input, dll) 
+            # sesuai dengan nama variabel yang ada di kodemu!
+            pdf_bytes = generate_pdf_report(
+                fig1=fig_N, # Ganti dengan variabel grafik N kamu
+                fig2=fig_P, # Ganti dengan variabel grafik P kamu
+                fig3=fig_K, # Ganti dengan variabel grafik K kamu
+                umur=umur_tanaman,         # Ganti dengan variabel input umur
+                curah_hujan=curah_hujan,   # Ganti dengan variabel input curah hujan
+                populasi=populasi_pokok,   # Ganti dengan variabel input populasi
+                harga_jual=harga_tbs,      # Ganti dengan variabel input harga
+                opt_N=rekomendasi_N,       # Ganti dengan output N optimal
+                opt_P=rekomendasi_P,       # Ganti dengan output P optimal
+                opt_K=rekomendasi_K,       # Ganti dengan output K optimal
+                opt_yield=prediksi_yield,  # Ganti dengan output prediksi panen
+                global_max_profit=max_profit # Ganti dengan output profit maksimal
+            )
+            
+            # Simpan hasil PDF ke dalam memori sementara (session_state)
+            st.session_state['laporan_pdf_siap'] = pdf_bytes
+            st.success("Tadaaa! Dokumen PDF berhasil dibuat dan siap diunduh!")
+            
+        except Exception as e:
+            st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
 
-st.download_button(
-    label="📥 Download Executive Report (PDF)",
-    data=pdf_bytes,
-    file_name=f"Laporan_Pemupukan_AI_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-    mime="application/pdf",
-    type="primary"
-)
+# 2. Tampilkan tombol Download HANYA JIKA PDF sudah selesai dibuat di atas
+if 'laporan_pdf_siap' in st.session_state:
+    st.download_button(
+        label="⬇️ Unduh Laporan PDF Sekarang",
+        data=st.session_state['laporan_pdf_siap'],
+        file_name="Laporan_Rekomendasi_Pemupukan_AI.pdf",
+        mime="application/pdf"
+    )
 
 # ---FOOTER---
 st.caption('Dashboard dikembangkan oleh Ham D Roger v1.1 - 2026 | Powered by Machine Learning')
