@@ -389,7 +389,7 @@ st.markdown("### 📄 Export Laporan Eksekutif")
 st.write("Unduh hasil kalkulasi beserta grafik kurva profitabilitas dalam format PDF formal.")
 
 if st.button("Buat Dokumen PDF"):
-    with st.spinner("Menyiapkan dokumen PDF... Proses ini super cepat!"):
+    with st.spinner("Menyiapkan dokumen PDF..."):
         try:
             # Perhatikan: Kita sekarang mengirim DATA ARRAY aslinya, BUKAN fig1, fig2
             pdf_bytes = generate_pdf_report(
@@ -408,7 +408,7 @@ if st.button("Buat Dokumen PDF"):
             )
             
             st.session_state['laporan_pdf_siap'] = pdf_bytes
-            st.success("Tadaaa! Dokumen PDF berhasil dibuat!")
+            st.success("Dokumen PDF berhasil dibuat!")
             
         except Exception as e:
             st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
