@@ -278,8 +278,7 @@ def create_static_chart(x_data, y_data, opt_x, max_y, title, color, xlabel, x_mi
     return tmpfile.name
 
 # --- FUNGSI UTAMA PEMBUAT PDF ---
-def generate_pdf_report(N_range, profits_N, P_range, profits_P, K_range, profits_K, 
-                        umur, curah_hujan, populasi, harga_jual, opt_N, opt_P, opt_K, opt_yield, global_max_profit):
+def generate_pdf_report(N_range, profits_N, P_range, profits_P, K_range, profits_K, umur, curah_hujan, populasi, harga_jual, opt_N, opt_P, opt_K, opt_yield, global_max_profit):
     pdf = FPDF()
     pdf.add_page()
     
