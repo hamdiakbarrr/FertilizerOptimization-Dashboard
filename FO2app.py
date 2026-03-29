@@ -393,40 +393,6 @@ if st.button("Buat Dokumen PDF"):
         except Exception as e:
             st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
 
-# TOMBOL DOWNLOAD DI STREAMLIT
-st.markdown("### 📄 Export Laporan Eksekutif")
-st.write("Unduh hasil kalkulasi beserta grafik kurva profitabilitas dalam format PDF formal.")
-
-# 1. Tombol pemicu untuk mulai membuat PDF
-if st.button("Buat Dokumen PDF"):
-    # Munculkan animasi loading agar user tahu sistem sedang bekerja
-    with st.spinner("Menyiapkan dokumen PDF... Proses ini memakan waktu beberapa detik."):
-        try:
-            # PANGGIL FUNGSINYA DI SINI
-            # Penting: Pastikan nama variabel di bawah ini (fig_N, umur_input, dll) 
-            # sesuai dengan nama variabel yang ada di kodemu!
-            pdf_bytes = generate_pdf_report(
-                fig1=fig_N, # Ganti dengan variabel grafik N kamu
-                fig2=fig_P, # Ganti dengan variabel grafik P kamu
-                fig3=fig_K, # Ganti dengan variabel grafik K kamu
-                umur=umur_tanaman,         # Ganti dengan variabel input umur
-                curah_hujan=curah_hujan,   # Ganti dengan variabel input curah hujan
-                populasi=populasi_pokok,   # Ganti dengan variabel input populasi
-                harga_jual=harga_tbs,      # Ganti dengan variabel input harga
-                opt_N=rekomendasi_N,       # Ganti dengan output N optimal
-                opt_P=rekomendasi_P,       # Ganti dengan output P optimal
-                opt_K=rekomendasi_K,       # Ganti dengan output K optimal
-                opt_yield=prediksi_yield,  # Ganti dengan output prediksi panen
-                global_max_profit=max_profit # Ganti dengan output profit maksimal
-            )
-            
-            # Simpan hasil PDF ke dalam memori sementara (session_state)
-            st.session_state['laporan_pdf_siap'] = pdf_bytes
-            st.success("Tadaaa! Dokumen PDF berhasil dibuat dan siap diunduh!")
-            
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
-
 # 2. Tampilkan tombol Download HANYA JIKA PDF sudah selesai dibuat di atas
 if 'laporan_pdf_siap' in st.session_state:
     st.download_button(
