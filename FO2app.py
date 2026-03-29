@@ -348,9 +348,13 @@ def generate_pdf_report(N_range, profits_N, P_range, profits_P, K_range, profits
     pdf.ln(2)
 
     # Generate 3 gambar statis
-    img_N = create_static_chart(N_range, profits_N, opt_N, global_max_profit, "Kurva Nitrogen (N)", "#4FC3F7", "N (kg/ha)")
-    img_P = create_static_chart(P_range, profits_P, opt_P, global_max_profit, "Kurva Fosfor (P)", "#81C784", "P (kg/ha)")
-    img_K = create_static_chart(K_range, profits_K, opt_K, global_max_profit, "Kurva Kalium (K)", "#BA68C8", "K (kg/ha)")
+    # Tentukan rentang sumbu X yang seragam untuk PDF (misal: 100 sampai 400)
+    batas_bawah = 100
+    batas_atas = 400
+
+    img_N = create_static_chart(N_range, profits_N, opt_N, global_max_profit, "Kurva Nitrogen (N)", "#4FC3F7", "N (kg/ha)", batas_bawah, batas_atas)
+    img_P = create_static_chart(P_range, profits_P, opt_P, global_max_profit, "Kurva Fosfor (P)", "#81C784", "P (kg/ha)", batas_bawah, batas_atas)
+    img_K = create_static_chart(K_range, profits_K, opt_K, global_max_profit, "Kurva Kalium (K)", "#BA68C8", "K (kg/ha)", batas_bawah, batas_atas)
     
     # Masukkan ke PDF
     pdf.image(img_N, x=15, w=180)
