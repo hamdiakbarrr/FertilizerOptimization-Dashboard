@@ -247,21 +247,22 @@ with c3:
     fig_k = create_plotly_chart(K_range, profits_K, opt_K, global_max_profit, "Kurva Kalium (K)", "#BA68C8", "K (kg/ha)")
     st.plotly_chart(fig_k, use_container_width=True)
 
+import streamlit as st
+import plotly.graph_objects as go
+import plotly.io as pio
 from fpdf import FPDF
 from datetime import datetime
 import tempfile
-import plotly.io as pio
 import os
+import gc  # KUNCI TAMBAHAN: Untuk membersihkan memori RAM (Garbage Collector)
 
 # --- KODE WAJIB ANTI-HANG STREAMLIT CLOUD ---
-# Letakkan 2 baris ini di bagian paling atas app.py kamu (setelah import)
 pio.kaleido.scope.mathjax = None
 pio.kaleido.scope.chromium_args = tuple([
     "--headless", "--no-sandbox", "--disable-gpu", 
     "--single-process", "--disable-dev-shm-usage"
 ])
 
-# Tambahkan semua variabel yang dibutuhkan ke dalam parameter (dalam tanda kurung)
 def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jual, opt_N, opt_P, opt_K, opt_yield, global_max_profit):
     pdf = FPDF()
     pdf.add_page()
@@ -331,7 +332,7 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
     pdf.cell(0, 10, "4. Kurva Analisis Profitabilitas (N, P, K):", ln=True, align='C')
     pdf.ln(5)
     
-    # 1. Trik Pemanasan Kaleido (Mencegah Deadlock / Loading Terus)
+    # 1. Trik Pemanasan Kaleido (Mencegah Deadlock)
     try:
         dummy_fig = go.Figure()
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as dummy_file:
@@ -353,66 +354,7 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
         )
         
         fig_copy.update_yaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
-        fig_copy.update_xaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-            # Menggunakan scale=1 dan engine="kaleido" agar tidak menguras memori server
-            fig_copy.write_image(tmpfile.name, format="png", width=800, height=350, scale=1, engine="kaleido") 
-            pdf.image(tmpfile.name, x=15, w=180)
-            pdf.ln(3) 
-            
-        os.unlink(tmpfile.name)
-    
-    # --- PENUTUP LAPORAN ---
-    pdf.ln(5)
-    pdf.set_font("Arial", 'I', 9)
-    pdf.set_text_color(150, 150, 150)
-    pdf.cell(0, 5, "Laporan ini di-generate otomatis oleh AI Fertilizer Optimization Engine.", ln=True, align='C')
-    
-    return pdf.output(dest='S').encode('latin-1')
-
-# TOMBOL DOWNLOAD DI STREAMLIT
-st.markdown("### 📄 Export Laporan Eksekutif")
-st.write("Unduh hasil kalkulasi beserta grafik kurva profitabilitas dalam format PDF formal.")
-
-# 1. Tombol pemicu untuk mulai membuat PDF
-if st.button("Buat Dokumen PDF"):
-    # Munculkan animasi loading agar user tahu sistem sedang bekerja
-    with st.spinner("Menyiapkan dokumen PDF... Proses ini memakan waktu beberapa detik."):
-        try:
-            # PANGGIL FUNGSINYA DI SINI
-            # Penting: Pastikan nama variabel di bawah ini (fig_N, umur_input, dll) 
-            # sesuai dengan nama variabel yang ada di kodemu!
-            pdf_bytes = generate_pdf_report(
-                fig1=fig_n, # Ganti dengan variabel grafik N kamu
-                fig2=fig_p, # Ganti dengan variabel grafik P kamu
-                fig3=fig_k, # Ganti dengan variabel grafik K kamu
-                umur=umur,         # Ganti dengan variabel input umur
-                curah_hujan=curah_hujan,   # Ganti dengan variabel input curah hujan
-                populasi=populasi,   # Ganti dengan variabel input populasi
-                harga_jual=harga_jual,      # Ganti dengan variabel input harga
-                opt_N=opt_N,       # Ganti dengan output N optimal
-                opt_P=opt_P,       # Ganti dengan output P optimal
-                opt_K=opt_K,       # Ganti dengan output K optimal
-                opt_yield=opt_yield,  # Ganti dengan output prediksi panen
-                global_max_profit=global_max_profit # Ganti dengan output profit maksimal
-            )
-            
-            # Simpan hasil PDF ke dalam memori sementara (session_state)
-            st.session_state['laporan_pdf_siap'] = pdf_bytes
-            st.success("Tadaaa! Dokumen PDF berhasil dibuat dan siap diunduh!")
-            
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
-
-# 2. Tampilkan tombol Download HANYA JIKA PDF sudah selesai dibuat di atas
-if 'laporan_pdf_siap' in st.session_state:
-    st.download_button(
-        label="⬇️ Unduh Laporan PDF Sekarang",
-        data=st.session_state['laporan_pdf_siap'],
-        file_name="Laporan_Rekomendasi_Pemupukan_AI.pdf",
-        mime="application/pdf"
-    )
+        fig_copy.update_xaxes(showticklabels=True, color='black', gridcolor='#E
 
 # ---FOOTER---
 st.caption('Dashboard dikembangkan oleh Ham D Roger v1.1 - 2026 | Powered by Machine Learning')
