@@ -113,10 +113,9 @@ def calculate_profit(yield_pred, n, p, k):
     return revenue - biaya
 
 # LANGKAH 1: OPTIMASI GLOBAL CEPAT
-# BUG FIX: Menggunakan 20 titik agar Streamlit tidak lag (8.000 iterasi, bukan 125.000)
-N_grid = np.linspace(min_N, 300, 20)
-P_grid = np.linspace(min_P, 300, 20)
-K_grid = np.linspace(min_K, 300, 20)
+N_grid = np.linspace(150, 400, 50)
+P_grid = np.linspace(150, 400, 50)
+K_grid = np.linspace(150, 400, 50)
 
 nn, pp, kk = np.meshgrid(N_grid, P_grid, K_grid, indexing='ij')
 
