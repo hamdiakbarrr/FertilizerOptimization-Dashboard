@@ -354,7 +354,64 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
         )
         
         fig_copy.update_yaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
-        fig_copy.update_xaxes(showticklabels=True, color='black', gridcolor='#E
+        fig_copy.update_xaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
+            fig_copy.write_image(tmpfile.name, format="png", width=800, height=350, scale=1, engine="kaleido") 
+            pdf.image(tmpfile.name, x=15, w=180)
+            pdf.ln(3) 
+            
+        os.unlink(tmpfile.name)
+        
+        # PENGAMANAN MEMORI: Hapus figur dari memori RAM setiap kali selesai 1 grafik
+        del fig_copy
+        gc.collect() 
+    
+    # --- PENUTUP LAPORAN ---
+    pdf.ln(5)
+    pdf.set_font("Arial", 'I', 9)
+    pdf.set_text_color(150, 150, 150)
+    pdf.cell(0, 5, "Laporan ini di-generate otomatis oleh AI Fertilizer Optimization Engine.", ln=True, align='C')
+    
+    return pdf.output(dest='S').encode('latin-1')
+
+# ==========================================
+# TOMBOL DOWNLOAD DI STREAMLIT
+# ==========================================
+st.markdown("### 📄 Export Laporan Eksekutif")
+st.write("Unduh hasil kalkulasi beserta grafik kurva profitabilitas dalam format PDF formal.")
+
+if st.button("Buat Dokumen PDF"):
+    with st.spinner("Menyiapkan dokumen PDF... Proses ini memakan waktu beberapa saat karena merender grafik resolusi tinggi."):
+        try:
+            pdf_bytes = generate_pdf_report(
+                fig1=fig_n, 
+                fig2=fig_p, 
+                fig3=fig_k, 
+                umur=umur,         
+                curah_hujan=curah_hujan,   
+                populasi=populasi,   
+                harga_jual=harga_jual,      
+                opt_N=opt_N,       
+                opt_P=opt_P,       
+                opt_K=opt_K,       
+                opt_yield=opt_yield,  
+                global_max_profit=global_max_profit 
+            )
+            
+            st.session_state['laporan_pdf_siap'] = pdf_bytes
+            st.success("Tadaaa! Dokumen PDF berhasil dibuat dan siap diunduh!")
+            
+        except Exception as e:
+            st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
+
+if 'laporan_pdf_siap' in st.session_state:
+    st.download_button(
+        label="⬇️ Unduh Laporan PDF Sekarang",
+        data=st.session_state['laporan_pdf_siap'],
+        file_name="Laporan_Rekomendasi_Pemupukan_AI.pdf",
+        mime="application/pdf"
+    )
 
 # ---FOOTER---
 st.caption('Dashboard dikembangkan oleh Ham D Roger v1.1 - 2026 | Powered by Machine Learning')
