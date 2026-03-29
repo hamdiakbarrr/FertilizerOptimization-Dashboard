@@ -145,9 +145,9 @@ global_max_profit = grid_df.loc[best_idx, 'profit']
 
 # LANGKAH 2: GENERATE KURVA HALUS (1D)
 # Memastikan titik optimal absolut masuk ke dalam array grafik agar kurva tidak meleset
-N_range = np.sort(np.unique(np.append(np.linspace(min_N, 400, 50), opt_N)))
-P_range = np.sort(np.unique(np.append(np.linspace(min_P, 400, 50), opt_P)))
-K_range = np.sort(np.unique(np.append(np.linspace(min_K, 400, 50), opt_K)))
+N_range = np.sort(np.unique(np.append(np.linspace(100, 400, 50), opt_N)))
+P_range = np.sort(np.unique(np.append(np.linspace(100, 400, 50), opt_P)))
+K_range = np.sort(np.unique(np.append(np.linspace(100, 400, 50), opt_K)))
 
 def get_profit_curve_vectorized(nutrient_col, val_range, best_n, best_p, best_k):
     temp_df = pd.concat([sample_data] * len(val_range), ignore_index=True)
@@ -236,14 +236,18 @@ c1, c2, c3 = st.columns(3)
 
 with c1:
     fig_n = create_plotly_chart(N_range, profits_N, opt_N, global_max_profit, "Kurva Nitrogen (N)", "#4FC3F7", "N (kg/ha)")
+    # Menerapkan slider HANYA sebagai batas pandang kamera web
+    fig_n.update_xaxes(range=[min_N, 400]) 
     st.plotly_chart(fig_n, use_container_width=True)
 
 with c2:
     fig_p = create_plotly_chart(P_range, profits_P, opt_P, global_max_profit, "Kurva Fosfor (P)", "#81C784", "P (kg/ha)")
+    fig_p.update_xaxes(range=[min_P, 400])
     st.plotly_chart(fig_p, use_container_width=True)
 
 with c3:
     fig_k = create_plotly_chart(K_range, profits_K, opt_K, global_max_profit, "Kurva Kalium (K)", "#BA68C8", "K (kg/ha)")
+    fig_k.update_xaxes(range=[min_K, 400])
     st.plotly_chart(fig_k, use_container_width=True)
 
 from fpdf import FPDF
@@ -267,7 +271,7 @@ def create_static_chart(x_data, y_data, opt_x, max_y, title, color, xlabel, x_mi
     ax.grid(True, linestyle=':', alpha=0.6)
     
     # --- TAMBAHAN BARU: Mengunci skala sumbu X agar ke-3 grafik sejajar ---
-    ax.set_xlim([x_min, x_max]) 
+    ax.set_xlim([x_min, 400]) 
     
     ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: "{:,}".format(int(x))))
     
