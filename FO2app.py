@@ -252,37 +252,30 @@ import tempfile
 import gc
 import matplotlib.pyplot as plt
 
-# --- FUNGSI HELPER UNTUK MEMBUAT GRAFIK MATPLOTLIB ---
-def create_static_chart(x_data, y_data, opt_x, max_y, title, color, xlabel):
-    """Membuat grafik gambar statis super ringan tanpa butuh browser/kaleido"""
-    fig, ax = plt.subplots(figsize=(8, 3.5)) # Ukuran disesuaikan untuk PDF
+# Tambahkan parameter x_min dan x_max
+def create_static_chart(x_data, y_data, opt_x, max_y, title, color, xlabel, x_min=150, x_max=400):
+    fig, ax = plt.subplots(figsize=(8, 3.5)) 
     
-    # Plot garis utama
     ax.plot(x_data, y_data, color=color, linewidth=2.5)
     
-    # Beri tanda titik puncak (Optimal)
     ax.scatter([opt_x], [max_y], color='red', s=50, zorder=5)
     ax.axvline(x=opt_x, color='red', linestyle='--', linewidth=1)
     
-    # Percantik tampilan grafik
     ax.set_title(title, fontsize=14, fontweight='bold', color='#333333')
     ax.set_xlabel(xlabel, fontsize=11)
     ax.set_ylabel("Estimasi Profit (Rp)", fontsize=11)
     ax.grid(True, linestyle=':', alpha=0.6)
     
-    # Atur format angka sumbu Y agar rapi (opsional)
+    # --- TAMBAHAN BARU: Mengunci skala sumbu X agar ke-3 grafik sejajar ---
+    ax.set_xlim([x_min, x_max]) 
+    
     ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: "{:,}".format(int(x))))
     
     plt.tight_layout()
-    
-    # Simpan ke file sementara
     tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-    fig.savefig(tmpfile.name, format="png", dpi=150) # Resolusi standar yang jelas tapi ringan
-    
-    # Bebaskan memori segera!
+    fig.savefig(tmpfile.name, format="png", dpi=150) 
     plt.close(fig)
     return tmpfile.name
-
 
 # --- FUNGSI UTAMA PEMBUAT PDF ---
 def generate_pdf_report(N_range, profits_N, P_range, profits_P, K_range, profits_K, 
@@ -353,7 +346,7 @@ def generate_pdf_report(N_range, profits_N, P_range, profits_P, K_range, profits
     pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 10, "4. Kurva Analisis Profitabilitas (N, P, K):", ln=True, align='C')
     pdf.ln(2)
-    
+
     # Generate 3 gambar statis
     img_N = create_static_chart(N_range, profits_N, opt_N, global_max_profit, "Kurva Nitrogen (N)", "#4FC3F7", "N (kg/ha)")
     img_P = create_static_chart(P_range, profits_P, opt_P, global_max_profit, "Kurva Fosfor (P)", "#81C784", "P (kg/ha)")
