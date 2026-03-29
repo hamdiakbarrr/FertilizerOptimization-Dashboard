@@ -247,23 +247,47 @@ with c3:
     fig_k = create_plotly_chart(K_range, profits_K, opt_K, global_max_profit, "Kurva Kalium (K)", "#BA68C8", "K (kg/ha)")
     st.plotly_chart(fig_k, use_container_width=True)
 
-import streamlit as st
-import plotly.graph_objects as go
-import plotly.io as pio
 from fpdf import FPDF
 from datetime import datetime
 import tempfile
-import os
-import gc  # KUNCI TAMBAHAN: Untuk membersihkan memori RAM (Garbage Collector)
+import gc
+import matplotlib.pyplot as plt
 
-# --- KODE WAJIB ANTI-HANG STREAMLIT CLOUD ---
-pio.kaleido.scope.mathjax = None
-pio.kaleido.scope.chromium_args = tuple([
-    "--headless", "--no-sandbox", "--disable-gpu", 
-    "--single-process", "--disable-dev-shm-usage"
-])
+# --- FUNGSI HELPER UNTUK MEMBUAT GRAFIK MATPLOTLIB ---
+def create_static_chart(x_data, y_data, opt_x, max_y, title, color, xlabel):
+    """Membuat grafik gambar statis super ringan tanpa butuh browser/kaleido"""
+    fig, ax = plt.subplots(figsize=(8, 3.5)) # Ukuran disesuaikan untuk PDF
+    
+    # Plot garis utama
+    ax.plot(x_data, y_data, color=color, linewidth=2.5)
+    
+    # Beri tanda titik puncak (Optimal)
+    ax.scatter([opt_x], [max_y], color='red', s=50, zorder=5)
+    ax.axvline(x=opt_x, color='red', linestyle='--', linewidth=1)
+    
+    # Percantik tampilan grafik
+    ax.set_title(title, fontsize=14, fontweight='bold', color='#333333')
+    ax.set_xlabel(xlabel, fontsize=11)
+    ax.set_ylabel("Estimasi Profit (Rp)", fontsize=11)
+    ax.grid(True, linestyle=':', alpha=0.6)
+    
+    # Atur format angka sumbu Y agar rapi (opsional)
+    ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: "{:,}".format(int(x))))
+    
+    plt.tight_layout()
+    
+    # Simpan ke file sementara
+    tmpfile = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    fig.savefig(tmpfile.name, format="png", dpi=150) # Resolusi standar yang jelas tapi ringan
+    
+    # Bebaskan memori segera!
+    plt.close(fig)
+    return tmpfile.name
 
-def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jual, opt_N, opt_P, opt_K, opt_yield, global_max_profit):
+
+# --- FUNGSI UTAMA PEMBUAT PDF ---
+def generate_pdf_report(N_range, profits_N, P_range, profits_P, K_range, profits_K, 
+                        umur, curah_hujan, populasi, harga_jual, opt_N, opt_P, opt_K, opt_yield, global_max_profit):
     pdf = FPDF()
     pdf.add_page()
     
@@ -282,7 +306,7 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
     pdf.set_text_color(100, 100, 100)
     tanggal_cetak = datetime.now().strftime("%d %B %Y - %H:%M WIB")
     pdf.cell(0, 5, f"Dicetak pada: {tanggal_cetak}", ln=True, align='C')
-    pdf.ln(15) 
+    pdf.ln(10) 
     
     # --- BAGIAN 1: KONDISI LAPANGAN ---
     pdf.set_font("Arial", 'B', 12)
@@ -320,9 +344,8 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
     pdf.set_text_color(211, 47, 47)
     pdf.cell(10); pdf.cell(0, 10, f"Estimasi Profit Maksimal: Rp {global_max_profit:,.0f}", ln=True)
     
-    # --- BAGIAN 4: INSERT GAMBAR GRAFIK ---
+    # --- BAGIAN 4: INSERT GAMBAR GRAFIK (MATPLOTLIB) ---
     pdf.add_page() 
-    
     if os.path.exists(logo_path):
         pdf.image(logo_path, x=15, y=10, w=20) 
         pdf.set_y(15)
@@ -330,42 +353,25 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
     pdf.set_font("Arial", 'B', 12)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 10, "4. Kurva Analisis Profitabilitas (N, P, K):", ln=True, align='C')
-    pdf.ln(5)
+    pdf.ln(2)
     
-    # 1. Trik Pemanasan Kaleido (Mencegah Deadlock)
-    try:
-        dummy_fig = go.Figure()
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as dummy_file:
-            dummy_fig.write_image(dummy_file.name, format="png", engine="kaleido")
-        os.unlink(dummy_file.name)
-    except Exception:
-        pass 
-        
-    # 2. PROSES RENDER GRAFIK ASLI
-    for idx, fig in enumerate([fig1, fig2, fig3]):
-        fig_copy = go.Figure(fig) 
-        
-        fig_copy.update_layout(
-            plot_bgcolor='white', 
-            paper_bgcolor='white', 
-            font=dict(color='black', size=14), 
-            margin=dict(l=80, r=30, t=40, b=50), 
-            title_font=dict(size=16)
-        )
-        
-        fig_copy.update_yaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
-        fig_copy.update_xaxes(showticklabels=True, color='black', gridcolor='#E0E0E0', zerolinecolor='#9E9E9E')
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-            fig_copy.write_image(tmpfile.name, format="png", width=800, height=350, scale=1, engine="kaleido") 
-            pdf.image(tmpfile.name, x=15, w=180)
-            pdf.ln(3) 
-            
-        os.unlink(tmpfile.name)
-        
-        # PENGAMANAN MEMORI: Hapus figur dari memori RAM setiap kali selesai 1 grafik
-        del fig_copy
-        gc.collect() 
+    # Generate 3 gambar statis
+    img_N = create_static_chart(N_range, profits_N, opt_N, global_max_profit, "Kurva Nitrogen (N)", "#4FC3F7", "N (kg/ha)")
+    img_P = create_static_chart(P_range, profits_P, opt_P, global_max_profit, "Kurva Fosfor (P)", "#81C784", "P (kg/ha)")
+    img_K = create_static_chart(K_range, profits_K, opt_K, global_max_profit, "Kurva Kalium (K)", "#BA68C8", "K (kg/ha)")
+    
+    # Masukkan ke PDF
+    pdf.image(img_N, x=15, w=180)
+    pdf.ln(1) 
+    pdf.image(img_P, x=15, w=180)
+    pdf.ln(1)
+    pdf.image(img_K, x=15, w=180)
+    
+    # Bersihkan file sampah
+    os.unlink(img_N)
+    os.unlink(img_P)
+    os.unlink(img_K)
+    gc.collect() 
     
     # --- PENUTUP LAPORAN ---
     pdf.ln(5)
@@ -375,6 +381,7 @@ def generate_pdf_report(fig1, fig2, fig3, umur, curah_hujan, populasi, harga_jua
     
     return pdf.output(dest='S').encode('latin-1')
 
+
 # ==========================================
 # TOMBOL DOWNLOAD DI STREAMLIT
 # ==========================================
@@ -382,12 +389,13 @@ st.markdown("### 📄 Export Laporan Eksekutif")
 st.write("Unduh hasil kalkulasi beserta grafik kurva profitabilitas dalam format PDF formal.")
 
 if st.button("Buat Dokumen PDF"):
-    with st.spinner("Menyiapkan dokumen PDF... Proses ini memakan waktu beberapa saat karena merender grafik resolusi tinggi."):
+    with st.spinner("Menyiapkan dokumen PDF... Proses ini super cepat!"):
         try:
+            # Perhatikan: Kita sekarang mengirim DATA ARRAY aslinya, BUKAN fig1, fig2
             pdf_bytes = generate_pdf_report(
-                fig1=fig_n, 
-                fig2=fig_p, 
-                fig3=fig_k, 
+                N_range=N_range, profits_N=profits_N,  
+                P_range=P_range, profits_P=profits_P,  
+                K_range=K_range, profits_K=profits_K,  
                 umur=umur,         
                 curah_hujan=curah_hujan,   
                 populasi=populasi,   
@@ -400,7 +408,7 @@ if st.button("Buat Dokumen PDF"):
             )
             
             st.session_state['laporan_pdf_siap'] = pdf_bytes
-            st.success("Tadaaa! Dokumen PDF berhasil dibuat dan siap diunduh!")
+            st.success("Tadaaa! Dokumen PDF berhasil dibuat!")
             
         except Exception as e:
             st.error(f"Terjadi kesalahan saat membuat PDF: {e}")
