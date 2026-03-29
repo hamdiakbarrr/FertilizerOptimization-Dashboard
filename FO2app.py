@@ -4,6 +4,9 @@ import numpy as np
 import pickle
 import os
 import plotly.graph_objects as go
+import plotly.io as pio
+
+pio.renderers.default = "notebook"
 
 # ======================
 # KONFIGURASI HALAMAN & CSS
