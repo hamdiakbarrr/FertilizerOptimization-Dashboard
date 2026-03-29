@@ -145,9 +145,9 @@ global_max_profit = grid_df.loc[best_idx, 'profit']
 
 # LANGKAH 2: GENERATE KURVA HALUS (1D)
 # Memastikan titik optimal absolut masuk ke dalam array grafik agar kurva tidak meleset
-N_range = np.sort(np.unique(np.append(np.linspace(min_N, 300, 50), opt_N)))
-P_range = np.sort(np.unique(np.append(np.linspace(min_P, 300, 50), opt_P)))
-K_range = np.sort(np.unique(np.append(np.linspace(min_K, 300, 50), opt_K)))
+N_range = np.sort(np.unique(np.append(np.linspace(150, 400, 50), opt_N)))
+P_range = np.sort(np.unique(np.append(np.linspace(150, 400, 50), opt_P)))
+K_range = np.sort(np.unique(np.append(np.linspace(150, 400, 50), opt_K)))
 
 def get_profit_curve_vectorized(nutrient_col, val_range, best_n, best_p, best_k):
     temp_df = pd.concat([sample_data] * len(val_range), ignore_index=True)
