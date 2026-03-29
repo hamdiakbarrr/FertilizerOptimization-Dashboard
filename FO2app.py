@@ -349,7 +349,7 @@ def generate_pdf_report(N_range, profits_N, P_range, profits_P, K_range, profits
 
     # Generate 3 gambar statis
     # Tentukan rentang sumbu X yang seragam untuk PDF (misal: 100 sampai 400)
-    batas_bawah = 100
+    batas_bawah = 150
     batas_atas = 400
 
     img_N = create_static_chart(N_range, profits_N, opt_N, global_max_profit, "Kurva Nitrogen (N)", "#4FC3F7", "N (kg/ha)", batas_bawah, batas_atas)
